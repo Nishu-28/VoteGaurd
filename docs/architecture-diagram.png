@@ -1,0 +1,28 @@
+# Placeholder for Architecture Diagram
+
+This file is a placeholder for the VoteGuard architecture diagram.
+
+In a real implementation, this would contain a visual diagram showing:
+
+1. Frontend (React) - Port 3000
+2. Backend (Spring Boot) - Port 8080  
+3. Biometric Service (FastAPI) - Port 8001
+4. Database (PostgreSQL/NeonDB)
+
+The diagram would illustrate:
+- Component relationships
+- Data flow
+- Security layers
+- API endpoints
+- Database schema
+
+For now, refer to the architecture-diagram.md file for a text-based description of the system architecture.
+
+
+
+
+
+
+
+
+
