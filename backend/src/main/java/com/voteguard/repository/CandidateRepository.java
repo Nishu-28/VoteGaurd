@@ -31,7 +31,8 @@ public class CandidateRepository {
                     .name(rs.getString("name"))
                     .party(rs.getString("party"))
                     .description(rs.getString("description"))
-                    .candidateNumber(rs.getInt("candidate_number"))
+                    .candidateNumber(rs.getObject("candidate_number", Integer.class))
+                    .electionId(rs.getLong("election_id"))
                     .isActive(rs.getBoolean("is_active"))
                     .createdAt(JdbcUtils.getLocalDateTime(rs, "created_at"))
                     .updatedAt(JdbcUtils.getLocalDateTime(rs, "updated_at"))
@@ -48,20 +49,28 @@ public class CandidateRepository {
     }
 
     private Candidate insert(Candidate candidate) {
-        String sql = "INSERT INTO candidates (name, party, description, candidate_number, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO candidates (name, party, description, candidate_number, election_id, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         KeyHolder keyHolder = new GeneratedKeyHolder();
         LocalDateTime now = LocalDateTime.now();
         
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
             ps.setString(1, candidate.getName());
             ps.setString(2, candidate.getParty());
             ps.setString(3, candidate.getDescription());
-            ps.setInt(4, candidate.getCandidateNumber());
-            ps.setBoolean(5, candidate.getIsActive());
-            JdbcUtils.setLocalDateTime(ps, 6, now);
+            
+            // Handle null candidate number
+            if (candidate.getCandidateNumber() != null) {
+                ps.setInt(4, candidate.getCandidateNumber());
+            } else {
+                ps.setNull(4, java.sql.Types.INTEGER);
+            }
+            
+            ps.setLong(5, candidate.getElectionId());
+            ps.setBoolean(6, candidate.getIsActive());
             JdbcUtils.setLocalDateTime(ps, 7, now);
+            JdbcUtils.setLocalDateTime(ps, 8, now);
             return ps;
         }, keyHolder);
 
@@ -73,14 +82,15 @@ public class CandidateRepository {
     }
 
     private Candidate update(Candidate candidate) {
-        String sql = "UPDATE candidates SET name = ?, party = ?, description = ?, candidate_number = ?, is_active = ?, updated_at = ? WHERE id = ?";
+        String sql = "UPDATE candidates SET name = ?, party = ?, description = ?, candidate_number = ?, election_id = ?, is_active = ?, updated_at = ? WHERE id = ?";
         
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(sql, 
                 candidate.getName(), 
                 candidate.getParty(), 
                 candidate.getDescription(), 
-                candidate.getCandidateNumber(), 
+                candidate.getCandidateNumber(),
+                candidate.getElectionId(),
                 candidate.getIsActive(), 
                 now, 
                 candidate.getId());
@@ -99,6 +109,16 @@ public class CandidateRepository {
         String sql = "SELECT * FROM candidates WHERE is_active = true";
         return jdbcTemplate.query(sql, candidateRowMapper);
     }
+    
+    public List<Candidate> findByElectionId(Long electionId) {
+        String sql = "SELECT * FROM candidates WHERE election_id = ?";
+        return jdbcTemplate.query(sql, candidateRowMapper, electionId);
+    }
+    
+    public List<Candidate> findByElectionIdAndIsActiveTrue(Long electionId) {
+        String sql = "SELECT * FROM candidates WHERE election_id = ? AND is_active = true";
+        return jdbcTemplate.query(sql, candidateRowMapper, electionId);
+    }
 
     public List<Candidate> findByParty(String party) {
         String sql = "SELECT * FROM candidates WHERE party = ?";
@@ -108,6 +128,11 @@ public class CandidateRepository {
     public List<Candidate> findActiveCandidatesOrderByNumber() {
         String sql = "SELECT * FROM candidates WHERE is_active = true ORDER BY candidate_number";
         return jdbcTemplate.query(sql, candidateRowMapper);
+    }
+    
+    public List<Candidate> findByElectionIdOrderByNumber(Long electionId) {
+        String sql = "SELECT * FROM candidates WHERE election_id = ? AND is_active = true ORDER BY candidate_number";
+        return jdbcTemplate.query(sql, candidateRowMapper, electionId);
     }
 
     public long countActiveCandidates() {

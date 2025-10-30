@@ -1,30 +1,45 @@
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\service\BiometricService.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\controller\CenterBasedAuthController.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\model\VotingStation.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\repository\CandidateRepository.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\controller\VotingStationController.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\repository\AuditLogRepository.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\service\VoteService.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\repository\VoterRepository.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\service\AuditLogService.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\util\JdbcUtils.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\model\Voter.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\service\CenterBasedAuthService.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\controller\VoterRegistrationController.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\VoteGuardApplication.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\security\JwtTokenProvider.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\config\SecurityConfig.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\controller\ResultsController.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\service\CustomUserDetailsService.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\controller\VoteController.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\model\AuditLog.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\repository\VoteRepository.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\repository\VotingStationRepository.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\service\VotingStationService.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\config\DatabaseConfig.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\config\DataInitializer.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\config\WebConfig.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\security\JwtAuthenticationFilter.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\model\Candidate.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\model\Vote.java
-C:\Users\nishu\Documents\VoteGaurd\backend\src\main\java\com\voteguard\service\VoterRegistrationService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\ElectionStatus.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\AuditLogService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\repository\AuditLogRepository.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\Vote.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\Voter.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\CenterBasedAuthController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\AdminController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\ElectionController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\AuditLog.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\VotingStation.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\repository\ElectionRepository.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\repository\VoteRepository.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\AdminSession.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\CustomUserDetailsService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\ElectionService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\config\WebConfig.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\config\JacksonConfig.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\repository\VotingStationRepository.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\repository\VoterRepository.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\util\JdbcUtils.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\ResultsController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\security\JwtTokenProvider.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\security\JwtAuthenticationFilter.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\Election.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\VoterRegistrationController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\VotingStationController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\AdminUser.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\BiometricService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\config\DataInitializer.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\AdminService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\repository\AdminRepository.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\security\AdminUserDetailsService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\BiometricController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\CenterBasedAuthService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\VotingStationService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\CandidateController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\model\Candidate.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\VoterRegistrationService.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\VoteGuardApplication.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\config\SecurityConfig.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\VoteController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\repository\CandidateRepository.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\config\DatabaseConfig.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\controller\AdminVoterController.java
+C:\Users\nishu\Documents\APP Prac\VoteGaurd\backend\src\main\java\com\voteguard\service\VoteService.java

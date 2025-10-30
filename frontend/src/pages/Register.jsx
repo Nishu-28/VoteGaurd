@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, Shield, AlertCircle, CheckCircle, ArrowLeft, User } from 'lucide-react';
+import { UserPlus, Shield, AlertCircle, CheckCircle, ArrowLeft, User, Calendar } from 'lucide-react';
 import { registrationService } from '../services/registration';
 import FingerprintUploader from '../components/FingerprintUploader';
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader';
@@ -19,11 +19,31 @@ const Register = () => {
   const [fingerprintFile, setFingerprintFile] = useState(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState(null);
   const [fingerprintVerified, setFingerprintVerified] = useState(false);
+  const [elections, setElections] = useState([]);
+  const [eligibleElections, setEligibleElections] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchElections();
+  }, []);
+
+  const fetchElections = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/elections/active');
+      if (response.ok) {
+        const data = await response.json();
+        setElections(data);
+        // By default, make voter eligible for all active elections
+        setEligibleElections(data.map(election => election.id));
+      }
+    } catch (error) {
+      console.error('Error fetching elections:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -260,6 +280,50 @@ const Register = () => {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Eligible Elections */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                Eligible Elections
+              </h3>
+              
+              {elections.length > 0 ? (
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    As a new voter, you will be automatically eligible for the following active elections:
+                  </p>
+                  <div className="space-y-2">
+                    {elections.map(election => (
+                      <div key={election.id} className="flex items-center justify-between bg-white dark:bg-gray-600 p-3 rounded border">
+                        <div>
+                          <h4 className="font-medium text-gray-900 dark:text-white">{election.name}</h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{election.description}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            {new Date(election.startDate).toLocaleDateString()} - {new Date(election.endDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-sm">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            election.status === 'ACTIVE' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                          }`}>
+                            {election.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 dark:bg-yellow-900 p-4 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    No active elections available at the moment. You will be notified when elections become available.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Biometric Information */}

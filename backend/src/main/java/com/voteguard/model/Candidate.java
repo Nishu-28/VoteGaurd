@@ -19,10 +19,18 @@ public class Candidate {
     private String party;
     private String description;
     private Integer candidateNumber;
+    
     @Builder.Default
     private Boolean isActive = true;
+    
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // Election relationship (just the ID for JDBC)
+    private Long electionId;
+    
+    // For object relationships (populated manually in service layer)
+    private Election election;
     private List<Vote> votes;
 }
 

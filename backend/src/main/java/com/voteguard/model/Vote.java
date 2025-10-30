@@ -13,6 +13,10 @@ public class Vote {
     private String ipAddress;
     private String userAgent;
     private Boolean fingerprintVerified = false;
+    
+    // Election relationship
+    private Long electionId;
+    private Election election;
 
     // Default constructor
     public Vote() {
@@ -20,7 +24,8 @@ public class Vote {
 
     // All args constructor
     public Vote(Long id, Voter voter, String voterName, Candidate candidate, String stationCode, 
-                LocalDateTime timestamp, String ipAddress, String userAgent, Boolean fingerprintVerified) {
+                LocalDateTime timestamp, String ipAddress, String userAgent, Boolean fingerprintVerified,
+                Long electionId, Election election) {
         this.id = id;
         this.voter = voter;
         this.voterName = voterName;
@@ -30,6 +35,8 @@ public class Vote {
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
         this.fingerprintVerified = fingerprintVerified != null ? fingerprintVerified : false;
+        this.electionId = electionId;
+        this.election = election;
     }
 
     // Getters and setters
@@ -105,6 +112,22 @@ public class Vote {
         this.fingerprintVerified = fingerprintVerified;
     }
 
+    public Long getElectionId() {
+        return electionId;
+    }
+
+    public void setElectionId(Long electionId) {
+        this.electionId = electionId;
+    }
+
+    public Election getElection() {
+        return election;
+    }
+
+    public void setElection(Election election) {
+        this.election = election;
+    }
+
     // Builder pattern
     public static Builder builder() {
         return new Builder();
@@ -120,6 +143,8 @@ public class Vote {
         private String ipAddress;
         private String userAgent;
         private Boolean fingerprintVerified = false;
+        private Long electionId;
+        private Election election;
 
         public Builder id(Long id) {
             this.id = id;
@@ -166,8 +191,18 @@ public class Vote {
             return this;
         }
 
+        public Builder electionId(Long electionId) {
+            this.electionId = electionId;
+            return this;
+        }
+
+        public Builder election(Election election) {
+            this.election = election;
+            return this;
+        }
+
         public Vote build() {
-            return new Vote(id, voter, voterName, candidate, stationCode, timestamp, ipAddress, userAgent, fingerprintVerified);
+            return new Vote(id, voter, voterName, candidate, stationCode, timestamp, ipAddress, userAgent, fingerprintVerified, electionId, election);
         }
     }
 }

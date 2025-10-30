@@ -19,6 +19,7 @@ public class Voter implements UserDetails {
     private Boolean hasVoted = false;
     private Boolean isActive = true;
     private Role role = Role.VOTER;
+    private List<String> eligibleElections; // List of election IDs this voter can participate in
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
