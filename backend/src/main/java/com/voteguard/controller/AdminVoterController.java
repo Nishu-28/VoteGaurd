@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/voters")
+@RequestMapping("/api/admin/voters")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 @RequiredArgsConstructor
 public class AdminVoterController {
 
@@ -47,6 +48,7 @@ public class AdminVoterController {
                     .hasVoted(voterUpdate.getHasVoted() != null ? voterUpdate.getHasVoted() : existingVoter.getHasVoted())
                     .isActive(voterUpdate.getIsActive() != null ? voterUpdate.getIsActive() : existingVoter.getIsActive())
                     .role(voterUpdate.getRole() != null ? voterUpdate.getRole() : existingVoter.getRole())
+                    .eligibleElections(voterUpdate.getEligibleElections() != null ? voterUpdate.getEligibleElections() : existingVoter.getEligibleElections())
                     .createdAt(existingVoter.getCreatedAt())
                     .updatedAt(LocalDateTime.now())
                     .build();

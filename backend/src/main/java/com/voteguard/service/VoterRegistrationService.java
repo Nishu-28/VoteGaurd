@@ -322,8 +322,13 @@ public class VoterRegistrationService {
     }
 
     private static class VoterRowMapper implements RowMapper<Voter> {
+        private static final Logger log = LoggerFactory.getLogger(VoterRowMapper.class);
+        
         @Override
         public Voter mapRow(ResultSet rs, int rowNum) throws SQLException {
+            // Parse eligible_elections JSONB column
+            List<String> eligibleElections = parseEligibleElections(rs.getString("eligible_elections"));
+            
             return Voter.builder()
                 .id(rs.getLong("id"))
                 .voterId(rs.getString("voter_id"))
@@ -334,11 +339,51 @@ public class VoterRegistrationService {
                 .hasVoted(rs.getBoolean("has_voted"))
                 .isActive(rs.getBoolean("is_active"))
                 .role(Voter.Role.valueOf(rs.getString("role")))
+                .eligibleElections(eligibleElections)
                 .createdAt(rs.getTimestamp("created_at") != null ? 
                     rs.getTimestamp("created_at").toLocalDateTime() : null)
                 .updatedAt(rs.getTimestamp("updated_at") != null ? 
                     rs.getTimestamp("updated_at").toLocalDateTime() : null)
                 .build();
+        }
+        
+        private List<String> parseEligibleElections(String jsonString) {
+            if (jsonString == null || jsonString.trim().isEmpty() || jsonString.equals("[]")) {
+                return new ArrayList<>();
+            }
+            
+            try {
+                // Remove brackets and quotes, then split by comma
+                String cleaned = jsonString.trim();
+                if (cleaned.startsWith("[")) {
+                    cleaned = cleaned.substring(1);
+                }
+                if (cleaned.endsWith("]")) {
+                    cleaned = cleaned.substring(0, cleaned.length() - 1);
+                }
+                
+                if (cleaned.trim().isEmpty()) {
+                    return new ArrayList<>();
+                }
+                
+                // Split by comma and remove quotes
+                String[] parts = cleaned.split(",");
+                List<String> result = new ArrayList<>();
+                for (String part : parts) {
+                    String cleanedPart = part.trim();
+                    // Remove surrounding quotes if present
+                    if (cleanedPart.startsWith("\"") && cleanedPart.endsWith("\"")) {
+                        cleanedPart = cleanedPart.substring(1, cleanedPart.length() - 1);
+                    }
+                    if (!cleanedPart.isEmpty()) {
+                        result.add(cleanedPart);
+                    }
+                }
+                return result;
+            } catch (Exception e) {
+                log.warn("Failed to parse eligible_elections JSON: {}", jsonString, e);
+                return new ArrayList<>();
+            }
         }
     }
 

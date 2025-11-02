@@ -19,6 +19,8 @@ public class Candidate {
     private String party;
     private String description;
     private Integer candidateNumber;
+    private String candidatePhotoPath;
+    private String partyImagePath;
     
     @Builder.Default
     private Boolean isActive = true;

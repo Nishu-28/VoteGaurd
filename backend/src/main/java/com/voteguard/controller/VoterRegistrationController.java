@@ -12,7 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/voters")
+@RequestMapping("/api/voters")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class VoterRegistrationController {
 
     private static final Logger log = LoggerFactory.getLogger(VoterRegistrationController.class);

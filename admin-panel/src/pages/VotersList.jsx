@@ -41,10 +41,12 @@ const VotersList = () => {
       setIsLoading(true);
       const response = await fetch('http://localhost:8080/api/voters');
       if (response.ok) {
-        const data = await response.json();
-        setVoters(data);
+        const result = await response.json();
+        // Extract the data array from the response
+        const votersList = Array.isArray(result) ? result : (result.data || []);
+        setVoters(votersList);
         // Fetch profile photos for all voters
-        await fetchVoterPhotos(data);
+        await fetchVoterPhotos(votersList);
       } else {
         setError('Failed to fetch voters');
       }
@@ -69,12 +71,16 @@ const VotersList = () => {
   };
 
   const fetchVoterPhotos = async (votersList) => {
+    if (!Array.isArray(votersList) || votersList.length === 0) {
+      return;
+    }
+    
     const photos = {};
     
     // Fetch photos for all voters in parallel
     const photoPromises = votersList.map(async (voter) => {
       try {
-        const response = await fetch(`http://localhost:8080/voters/${voter.voterId}/profile-photo`);
+        const response = await fetch(`http://localhost:8080/api/voters/${voter.voterId}/profile-photo`);
         if (response.ok) {
           const data = await response.json();
           photos[voter.voterId] = data.photoData;
@@ -89,6 +95,11 @@ const VotersList = () => {
   };
 
   const applyFilters = () => {
+    if (!Array.isArray(voters)) {
+      setFilteredVoters([]);
+      return;
+    }
+    
     let filtered = [...voters];
 
     // Search filter
@@ -135,13 +146,41 @@ const VotersList = () => {
     setShowEditModal(true);
   };
 
-  const handleSaveVoter = (updatedData) => {
-    // Update the voter in the local state
-    setVoters(prev => prev.map(voter => 
-      voter.id === updatedData.id ? { ...voter, ...updatedData } : voter
-    ));
-    setShowEditModal(false);
-    setSelectedVoter(null);
+  const handleSaveVoter = async (updatedData) => {
+    try {
+      // Convert eligibleElections array elements to strings if they're numbers
+      const eligibleElections = (updatedData.eligibleElections || []).map(id => String(id));
+      
+      const response = await fetch(`http://localhost:8080/api/admin/voters/${updatedData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...updatedData,
+          eligibleElections: eligibleElections
+        })
+      });
+
+      if (response.ok) {
+        const savedVoter = await response.json();
+        // Update the voter in the local state
+        setVoters(prev => prev.map(voter => 
+          voter.id === savedVoter.id ? { ...voter, ...savedVoter } : voter
+        ));
+        setShowEditModal(false);
+        setSelectedVoter(null);
+        
+        // Refresh the list to ensure data is up to date
+        await fetchVoters();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update voter');
+      }
+    } catch (error) {
+      console.error('Error updating voter:', error);
+      alert('Failed to update voter: ' + error.message);
+    }
   };
 
   const handleViewVoter = (voter) => {

@@ -15,6 +15,16 @@ public class Election {
     @Size(max = 200, message = "Election name must not exceed 200 characters")
     private String name;
     
+    @Size(min = 6, max = 6, message = "Election code must be exactly 6 characters")
+    private String electionCode; // Auto-generated 6-digit code
+    
+    private String electionOtp; // Time-based OTP for center setup (changes every 2 minutes)
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime otpExpiresAt; // OTP expiration timestamp
+    
+    private String activeCenterLocation; // Currently active voting center location
+    
     private String description;
     
     @NotNull(message = "Start date is required")
@@ -82,6 +92,18 @@ public class Election {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     
+    public String getElectionCode() { return electionCode; }
+    public void setElectionCode(String electionCode) { this.electionCode = electionCode; }
+    
+    public String getElectionOtp() { return electionOtp; }
+    public void setElectionOtp(String electionOtp) { this.electionOtp = electionOtp; }
+    
+    public LocalDateTime getOtpExpiresAt() { return otpExpiresAt; }
+    public void setOtpExpiresAt(LocalDateTime otpExpiresAt) { this.otpExpiresAt = otpExpiresAt; }
+    
+    public String getActiveCenterLocation() { return activeCenterLocation; }
+    public void setActiveCenterLocation(String activeCenterLocation) { this.activeCenterLocation = activeCenterLocation; }
+    
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     
@@ -129,6 +151,10 @@ public class Election {
     public static class ElectionBuilder {
         private Long id;
         private String name;
+        private String electionCode;
+        private String electionOtp;
+        private LocalDateTime otpExpiresAt;
+        private String activeCenterLocation;
         private String description;
         private LocalDateTime startDate;
         private LocalDateTime endDate;
@@ -139,6 +165,10 @@ public class Election {
         
         public ElectionBuilder id(Long id) { this.id = id; return this; }
         public ElectionBuilder name(String name) { this.name = name; return this; }
+        public ElectionBuilder electionCode(String electionCode) { this.electionCode = electionCode; return this; }
+        public ElectionBuilder electionOtp(String electionOtp) { this.electionOtp = electionOtp; return this; }
+        public ElectionBuilder otpExpiresAt(LocalDateTime otpExpiresAt) { this.otpExpiresAt = otpExpiresAt; return this; }
+        public ElectionBuilder activeCenterLocation(String activeCenterLocation) { this.activeCenterLocation = activeCenterLocation; return this; }
         public ElectionBuilder description(String description) { this.description = description; return this; }
         public ElectionBuilder startDate(LocalDateTime startDate) { this.startDate = startDate; return this; }
         public ElectionBuilder endDate(LocalDateTime endDate) { this.endDate = endDate; return this; }
@@ -151,6 +181,10 @@ public class Election {
             Election election = new Election();
             election.setId(id);
             election.setName(name);
+            election.setElectionCode(electionCode);
+            election.setElectionOtp(electionOtp);
+            election.setOtpExpiresAt(otpExpiresAt);
+            election.setActiveCenterLocation(activeCenterLocation);
             election.setDescription(description);
             election.setStartDate(startDate);
             election.setEndDate(endDate);

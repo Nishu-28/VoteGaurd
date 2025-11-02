@@ -65,6 +65,21 @@ public class ElectionService {
     public List<Election> searchElectionsByName(String searchTerm) {
         return electionRepository.searchElectionsByName(searchTerm);
     }
+    
+    public Optional<Election> findByElectionCode(String electionCode) {
+        return electionRepository.findByElectionCode(electionCode);
+    }
+    
+    public Optional<Election> findActiveElectionByCode(String electionCode) {
+        return electionRepository.findByElectionCodeAndIsActiveTrue(electionCode);
+    }
+    
+    public boolean validateElectionCode(String electionCode) {
+        if (electionCode == null || electionCode.length() != 6) {
+            return false;
+        }
+        return electionRepository.isValidElectionCode(electionCode);
+    }
 
     public void deleteById(Long id) {
         electionRepository.deleteById(id);
@@ -92,5 +107,24 @@ public class ElectionService {
             return save(election);
         }
         throw new RuntimeException("Election not found with id: " + electionId);
+    }
+    
+    public String generateOtpForElection(Long electionId) {
+        return electionRepository.generateElectionOtp(electionId);
+    }
+    
+    public boolean validateOtp(Long electionId, String otp) {
+        return electionRepository.validateElectionOtp(electionId, otp);
+    }
+    
+    public void setupElectionCenter(Long electionId, String otp, String centerLocation) {
+        if (!validateOtp(electionId, otp)) {
+            throw new RuntimeException("Invalid or expired OTP");
+        }
+        electionRepository.setActiveCenterLocation(electionId, centerLocation);
+    }
+    
+    public List<java.util.Map<String, Object>> getVoterActiveElections(Long voterId) {
+        return electionRepository.getVoterActiveElections(voterId);
     }
 }

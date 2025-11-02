@@ -13,6 +13,10 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
+  const [election, setElection] = useState(() => {
+    const stored = localStorage.getItem('election');
+    return stored ? JSON.parse(stored) : null;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,11 +45,23 @@ export const AuthProvider = ({ children }) => {
       fingerprintFile: fingerprintFile
     });
   };
+  
+  const setElectionContext = (electionData) => {
+    localStorage.setItem('election', JSON.stringify(electionData));
+    setElection(electionData);
+  };
+  
+  const clearElection = () => {
+    localStorage.removeItem('election');
+    setElection(null);
+  };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('election');
     setToken(null);
     setUser(null);
+    setElection(null);
   };
 
   const isAuthenticated = () => {
@@ -63,6 +79,9 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     token,
+    election,
+    setElectionContext,
+    clearElection,
     login,
     logout,
     isAuthenticated,

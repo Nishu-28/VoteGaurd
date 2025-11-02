@@ -11,21 +11,24 @@ const fileToBase64 = (file) => {
 };
 
 export const voteService = {
-  getCandidates: async () => {
+  getCandidates: async (electionId) => {
     try {
-      const response = await api.get('/vote/candidates');
+      const params = electionId ? { electionId } : {};
+      const response = await api.get('/vote/candidates', { params });
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to fetch candidates');
     }
   },
 
-  castVote: async (candidateId, voterId, stationCode) => {
+  castVote: async (candidateId, voterId, electionId) => {
     try {
       const formData = new FormData();
       formData.append('candidateId', candidateId.toString());
       formData.append('voterId', voterId.toString());
-      formData.append('stationCode', stationCode);
+      if (electionId) {
+        formData.append('electionId', electionId.toString());
+      }
 
       const response = await api.post('/vote/cast', formData, {
         headers: {
@@ -34,7 +37,10 @@ export const voteService = {
       });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Failed to cast vote');
+      // Extract detailed error message from response
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to cast vote';
+      console.error('Vote cast error:', error.response?.data);
+      throw new Error(errorMessage);
     }
   }
 };

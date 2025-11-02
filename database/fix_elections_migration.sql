@@ -26,10 +26,10 @@ CREATE VIEW voter_statistics AS
 SELECT 
     e.id as election_id,
     e.name as election_name,
-    COUNT(CASE WHEN v.eligible_elections ? e.id::text THEN 1 END) as eligible_voters,
+    COUNT(CASE WHEN v.eligible_elections @> jsonb_build_array(e.id::text) THEN 1 END) as eligible_voters,
     COUNT(CASE WHEN votes.voter_id IS NOT NULL THEN 1 END) as voters_who_voted,
     ROUND(COUNT(CASE WHEN votes.voter_id IS NOT NULL THEN 1 END) * 100.0 / 
-          NULLIF(COUNT(CASE WHEN v.eligible_elections ? e.id::text THEN 1 END), 0), 2) as voting_percentage
+          NULLIF(COUNT(CASE WHEN v.eligible_elections @> jsonb_build_array(e.id::text) THEN 1 END), 0), 2) as voting_percentage
 FROM elections e
 CROSS JOIN voters v
 LEFT JOIN votes ON votes.voter_id = v.id AND votes.election_id = e.id

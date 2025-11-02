@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +27,10 @@ public class VoterRepository {
     private final RowMapper<Voter> voterRowMapper = new RowMapper<Voter>() {
         @Override
         public Voter mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return Voter.builder()
+            // Parse eligible_elections JSONB column
+            List<String> eligibleElections = parseEligibleElections(rs.getString("eligible_elections"));
+            
+            Voter voter = Voter.builder()
                     .id(rs.getLong("id"))
                     .voterId(rs.getString("voter_id"))
                     .fullName(rs.getString("full_name"))
@@ -36,9 +40,11 @@ public class VoterRepository {
                     .hasVoted(rs.getBoolean("has_voted"))
                     .isActive(rs.getBoolean("is_active"))
                     .role(Voter.Role.valueOf(rs.getString("role")))
+                    .eligibleElections(eligibleElections)
                     .createdAt(JdbcUtils.getLocalDateTime(rs, "created_at"))
                     .updatedAt(JdbcUtils.getLocalDateTime(rs, "updated_at"))
                     .build();
+            return voter;
         }
     };
 
@@ -79,9 +85,13 @@ public class VoterRepository {
     }
 
     private Voter update(Voter voter) {
-        String sql = "UPDATE voters SET voter_id = ?, full_name = ?, email = ?, fingerprint_hash = ?, extra_field = ?, has_voted = ?, is_active = ?, role = ?, updated_at = ? WHERE id = ?";
+        String sql = "UPDATE voters SET voter_id = ?, full_name = ?, email = ?, fingerprint_hash = ?, extra_field = ?, has_voted = ?, is_active = ?, role = ?, eligible_elections = ?::jsonb, updated_at = ? WHERE id = ?";
         
         LocalDateTime now = LocalDateTime.now();
+        
+        // Convert eligibleElections list to JSONB string
+        String eligibleElectionsJson = convertElectionsToJson(voter.getEligibleElections());
+        
         jdbcTemplate.update(sql, 
                 voter.getVoterId(), 
                 voter.getFullName(), 
@@ -91,11 +101,63 @@ public class VoterRepository {
                 voter.getHasVoted(), 
                 voter.getIsActive(), 
                 voter.getRole().name(), 
+                eligibleElectionsJson,
                 now, 
                 voter.getId());
         
         voter.setUpdatedAt(now);
         return voter;
+    }
+    
+    private String convertElectionsToJson(List<String> electionIds) {
+        if (electionIds == null || electionIds.isEmpty()) {
+            return "[]";
+        }
+        
+        StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < electionIds.size(); i++) {
+            json.append("\"").append(electionIds.get(i)).append("\"");
+            if (i < electionIds.size() - 1) {
+                json.append(",");
+            }
+        }
+        json.append("]");
+        return json.toString();
+    }
+    
+    private List<String> parseEligibleElections(String jsonString) {
+        if (jsonString == null || jsonString.trim().isEmpty() || jsonString.equals("[]")) {
+            return new ArrayList<>();
+        }
+        
+        try {
+            String cleaned = jsonString.trim();
+            if (cleaned.startsWith("[")) {
+                cleaned = cleaned.substring(1);
+            }
+            if (cleaned.endsWith("]")) {
+                cleaned = cleaned.substring(0, cleaned.length() - 1);
+            }
+            
+            if (cleaned.trim().isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            String[] parts = cleaned.split(",");
+            List<String> result = new ArrayList<>();
+            for (String part : parts) {
+                String cleanedPart = part.trim();
+                if (cleanedPart.startsWith("\"") && cleanedPart.endsWith("\"")) {
+                    cleanedPart = cleanedPart.substring(1, cleanedPart.length() - 1);
+                }
+                if (!cleanedPart.isEmpty()) {
+                    result.add(cleanedPart);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     public Optional<Voter> findById(Long id) {

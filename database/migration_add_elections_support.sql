@@ -71,10 +71,10 @@ CREATE OR REPLACE VIEW voter_statistics AS
 SELECT 
     e.id as election_id,
     e.name as election_name,
-    COUNT(CASE WHEN v.eligible_elections ? e.id::text THEN 1 END) as eligible_voters,
+    COUNT(CASE WHEN v.eligible_elections @> jsonb_build_array(e.id::text) THEN 1 END) as eligible_voters,
     COUNT(CASE WHEN votes.voter_id IS NOT NULL THEN 1 END) as voters_who_voted,
     ROUND(COUNT(CASE WHEN votes.voter_id IS NOT NULL THEN 1 END) * 100.0 / 
-          NULLIF(COUNT(CASE WHEN v.eligible_elections ? e.id::text THEN 1 END), 0), 2) as voting_percentage
+          NULLIF(COUNT(CASE WHEN v.eligible_elections @> jsonb_build_array(e.id::text) THEN 1 END), 0), 2) as voting_percentage
 FROM elections e
 CROSS JOIN voters v
 LEFT JOIN votes ON votes.voter_id = v.id AND votes.election_id = e.id
@@ -83,16 +83,21 @@ GROUP BY e.id, e.name
 ORDER BY e.id;
 
 -- Create a function to check if a voter is eligible for an election
-CREATE OR REPLACE FUNCTION is_voter_eligible(voter_id BIGINT, election_id BIGINT)
+CREATE OR REPLACE FUNCTION is_voter_eligible(voter_id_param BIGINT, election_id_param BIGINT)
 RETURNS BOOLEAN AS $$
 DECLARE
     eligible BOOLEAN := FALSE;
 BEGIN
     -- Check if the election_id exists in the voter's eligible_elections array
-    SELECT (eligible_elections ? election_id::text) 
+    -- eligible_elections can be numbers [1,5] or strings ["1","5"]
+    -- We check both formats: as number and as string
+    SELECT (
+        (v.eligible_elections @> jsonb_build_array(election_id_param::bigint)) OR
+        (v.eligible_elections @> jsonb_build_array(election_id_param::text))
+    )
     INTO eligible
-    FROM voters 
-    WHERE id = voter_id AND is_active = true;
+    FROM voters v
+    WHERE v.id = voter_id_param AND v.is_active = true;
     
     RETURN COALESCE(eligible, FALSE);
 END;
@@ -115,7 +120,7 @@ BEGIN
     UPDATE voters 
     SET eligible_elections = eligible_elections || jsonb_build_array(election_id::text)
     WHERE id = voter_id 
-    AND NOT (eligible_elections ? election_id::text);
+    AND NOT (eligible_elections @> jsonb_build_array(election_id::text));
     
     RETURN TRUE;
 END;
@@ -153,7 +158,7 @@ BEGIN
         e.status,
         (votes.id IS NOT NULL) as has_voted
     FROM elections e
-    INNER JOIN voters v ON v.eligible_elections ? e.id::text
+    INNER JOIN voters v ON v.eligible_elections @> jsonb_build_array(e.id::text)
     LEFT JOIN votes ON votes.voter_id = v.id AND votes.election_id = e.id
     WHERE v.id = voter_id 
     AND v.is_active = true 
@@ -177,9 +182,11 @@ BEGIN
         RAISE EXCEPTION 'Voter with id % not found', NEW.voter_id;
     END IF;
     
-    -- Verify voter is eligible for this election
-    IF NOT is_voter_eligible(NEW.voter_id, NEW.election_id) THEN
-        RAISE EXCEPTION 'Voter with id % is not eligible for election %', NEW.voter_id, NEW.election_id;
+    -- Verify voter is eligible for this election (only if election_id is not NULL)
+    IF NEW.election_id IS NOT NULL THEN
+        IF NOT is_voter_eligible(NEW.voter_id, NEW.election_id) THEN
+            RAISE EXCEPTION 'Voter with id % is not eligible for election %', NEW.voter_id, NEW.election_id;
+        END IF;
     END IF;
     
     RETURN NEW;

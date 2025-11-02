@@ -21,8 +21,17 @@ const biometricApi = axios.create({
 // Request interceptor to add JWT token (skip for registration endpoints)
 api.interceptors.request.use(
   (config) => {
+    // Ensure URL is properly combined with baseURL (remove leading slash if present)
+    if (config.url && config.url.startsWith('/')) {
+      config.url = config.url.substring(1);
+    }
+    
+    // Log the full URL being requested (for debugging)
+    const fullUrl = config.baseURL + '/' + config.url;
+    console.log('API Request:', config.method?.toUpperCase(), fullUrl);
+    
     // Skip adding token for registration and auth endpoints
-    const skipTokenEndpoints = ['/voters/register', '/auth/login', '/auth/register'];
+    const skipTokenEndpoints = ['voters/register', 'auth/login', 'auth/register'];
     const shouldSkipToken = skipTokenEndpoints.some(endpoint => 
       config.url && config.url.includes(endpoint)
     );

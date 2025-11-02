@@ -12,7 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class CenterBasedAuthController {
 
     private static final Logger log = LoggerFactory.getLogger(CenterBasedAuthController.class);

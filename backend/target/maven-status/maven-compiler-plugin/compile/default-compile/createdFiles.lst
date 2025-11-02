@@ -1,6 +1,7 @@
 com\voteguard\config\JacksonConfig.class
 com\voteguard\model\Voter$Role.class
 com\voteguard\controller\AdminVoterController.class
+com\voteguard\security\CombinedUserDetailsService.class
 com\voteguard\service\VotingStationService.class
 com\voteguard\service\BiometricService$6.class
 com\voteguard\controller\ElectionController.class
@@ -43,6 +44,7 @@ com\voteguard\model\Voter$VoterBuilder.class
 com\voteguard\config\WebConfig.class
 com\voteguard\repository\VoteRepository.class
 com\voteguard\service\BiometricService$1.class
+com\voteguard\service\VoteService$1.class
 com\voteguard\model\Voter.class
 com\voteguard\service\AdminService$AdminAuthResult.class
 com\voteguard\model\Vote.class

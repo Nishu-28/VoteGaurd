@@ -19,6 +19,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/candidates")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 @RequiredArgsConstructor
 public class CandidateController {
 
@@ -43,6 +44,31 @@ public class CandidateController {
     public ResponseEntity<List<Candidate>> getCandidatesByElection(@PathVariable Long electionId) {
         List<Candidate> candidates = candidateRepository.findByElectionIdOrderByNumber(electionId);
         return ResponseEntity.ok(candidates);
+    }
+    
+    @GetMapping("/election-code/{electionCode}")
+    public ResponseEntity<?> getCandidatesByElectionCode(@PathVariable String electionCode) {
+        try {
+            // Find election by code first
+            String sql = "SELECT id FROM elections WHERE election_code = ? AND is_active = true";
+            List<Long> electionIds = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("id"), electionCode.toUpperCase());
+            
+            if (electionIds.isEmpty()) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                    "success", false,
+                    "message", "Election not found with code: " + electionCode
+                ));
+            }
+            
+            Long electionId = electionIds.get(0);
+            List<Candidate> candidates = candidateRepository.findByElectionIdOrderByNumber(electionId);
+            return ResponseEntity.ok(candidates);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "success", false,
+                "message", "Error fetching candidates: " + e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/{id}")

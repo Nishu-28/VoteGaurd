@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 @Service
+@org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
 public class AuditLogService {
 
     private static final Logger log = LoggerFactory.getLogger(AuditLogService.class);

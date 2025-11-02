@@ -134,6 +134,11 @@ public class CandidateRepository {
         String sql = "SELECT * FROM candidates WHERE election_id = ? AND is_active = true ORDER BY candidate_number";
         return jdbcTemplate.query(sql, candidateRowMapper, electionId);
     }
+    
+    public List<Candidate> findByElectionIdAndIsActiveTrueOrderByCandidateNumberAsc(Long electionId) {
+        String sql = "SELECT * FROM candidates WHERE election_id = ? AND is_active = true ORDER BY candidate_number ASC";
+        return jdbcTemplate.query(sql, candidateRowMapper, electionId);
+    }
 
     public long countActiveCandidates() {
         String sql = "SELECT COUNT(*) FROM candidates WHERE is_active = true";

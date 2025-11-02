@@ -36,9 +36,12 @@ const Dashboard = () => {
         fetch('http://localhost:8080/api/candidates')
       ]);
 
-      const voters = votersRes.ok ? await votersRes.json() : [];
+      const votersResult = votersRes.ok ? await votersRes.json() : [];
       const elections = electionsRes.ok ? await electionsRes.json() : [];
       const candidates = candidatesRes.ok ? await candidatesRes.json() : [];
+
+      // Extract the data array from the voters response
+      const voters = Array.isArray(votersResult) ? votersResult : (votersResult.data || []);
 
       // Calculate statistics
       const activeVoters = voters.filter(v => v.isActive !== false).length;

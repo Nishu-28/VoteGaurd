@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/auth';
+import { electionService } from '../services/election';
 import FingerprintUploader from '../components/FingerprintUploader';
 import Button from '../components/Button';
-import { Shield, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Shield, AlertCircle, CheckCircle, Vote } from 'lucide-react';
+import { decodeElectionCode } from '../utils/electionCode';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -19,20 +21,51 @@ const Login = () => {
   
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { electionCode: encodedCode } = useParams(); // Get encoded election code from URL
   const [searchParams] = useSearchParams();
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Debug: Log the encoded code from URL
+  React.useEffect(() => {
+    console.log('Login page - encodedCode from URL:', encodedCode);
+  }, [encodedCode]);
+  
+  // Decode the election code from URL
+  const electionCode = encodedCode ? decodeElectionCode(encodedCode) : null;
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      navigate('/ballot');
-    }
-    
-    // Check for success message from voting
+    // Check for messages from URL
     const message = searchParams.get('message');
+    
+    // If this is a vote success redirect, don't redirect back to ballot even if authenticated
     if (message === 'vote_success') {
       setSuccessMessage('Your vote has been cast successfully! Ready for the next voter.');
+      // Don't redirect - stay on login page
+      return;
     }
-  }, [isAuthenticated, navigate, searchParams]);
+    
+    if (isAuthenticated()) {
+      // Always redirect to encoded ballot URL if encodedCode is present in URL
+      if (encodedCode) {
+        console.log('Auto-redirect (already authenticated) to:', `/${encodedCode}/ballot`);
+        navigate(`/${encodedCode}/ballot`, { replace: true });
+      } else {
+        navigate('/ballot', { replace: true });
+      }
+    }
+    
+    // Handle other messages
+    if (message === 'session_expired') {
+      setError('Your session has expired. Please sign in again to continue voting.');
+    } else if (message === 'already_voted') {
+      setError('You have already cast your vote. Thank you for participating!');
+    }
+    
+    // Validate election code if present
+    if (encodedCode && !electionCode) {
+      setError('Invalid election code in URL. Please use the center setup page.');
+    }
+  }, [isAuthenticated, navigate, searchParams, electionCode, encodedCode]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -88,9 +121,17 @@ const Login = () => {
 
       // Redirect based on role
       if (response.voter.role === 'ADMIN') {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       } else {
-        navigate('/ballot');
+        // Always redirect to encoded ballot URL if encodedCode is present in URL
+        // Use encodedCode from the component scope (extracted from useParams at top level)
+        if (encodedCode) {
+          console.log('Redirecting to:', `/${encodedCode}/ballot`, 'from encodedCode:', encodedCode);
+          navigate(`/${encodedCode}/ballot`, { replace: true });
+        } else {
+          console.log('No encoded code in URL, redirecting to /ballot');
+          navigate('/ballot', { replace: true });
+        }
       }
     } catch (error) {
       setError(error.message);
@@ -133,6 +174,18 @@ const Login = () => {
           >
             Secure Voting with Biometric Authentication
           </motion.p>
+          {electionCode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="mt-3 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg inline-block"
+            >
+              <p className="text-xs font-medium text-blue-800 dark:text-blue-200">
+                Election Code: <span className="font-mono font-bold">{electionCode}</span>
+              </p>
+            </motion.div>
+          )}
         </div>
 
         {/* Login Form */}
@@ -142,53 +195,55 @@ const Login = () => {
           transition={{ delay: 0.6 }}
           className="card p-8"
         >
+          {/* Voter Authentication */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Voter ID */}
-            <div>
-              <label htmlFor="voterId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Voter ID
-              </label>
-              <input
-                id="voterId"
-                name="voterId"
-                type="text"
-                required
-                value={formData.voterId}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="Enter your voter ID"
-                disabled={isLoading}
-              />
-            </div>
 
-            {/* Extra Field (DOB, Department, etc.) */}
-            <div>
-              <label htmlFor="extraField" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Date of Birth / Department Code
-              </label>
-              <input
-                id="extraField"
-                name="extraField"
-                type="text"
-                required
-                value={formData.extraField}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="Enter your DOB (YYYY-MM-DD) or department code"
-                disabled={isLoading}
-              />
-            </div>
+              {/* Voter ID */}
+              <div>
+                <label htmlFor="voterId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Voter ID
+                </label>
+                <input
+                  id="voterId"
+                  name="voterId"
+                  type="text"
+                  required
+                  value={formData.voterId}
+                  onChange={handleInputChange}
+                  className="input-field"
+                  placeholder="Enter your voter ID"
+                  disabled={isLoading}
+                />
+              </div>
 
-            {/* Fingerprint Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Fingerprint Verification
-              </label>
-              <FingerprintUploader
-                onVerificationComplete={handleFingerprintVerification}
-                disabled={isLoading}
-              />
-            </div>
+              {/* Extra Field (DOB, Department, etc.) */}
+              <div>
+                <label htmlFor="extraField" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date of Birth / Department Code
+                </label>
+                <input
+                  id="extraField"
+                  name="extraField"
+                  type="text"
+                  required
+                  value={formData.extraField}
+                  onChange={handleInputChange}
+                  className="input-field"
+                  placeholder="Enter your DOB (YYYY-MM-DD) or department code"
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Fingerprint Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Fingerprint Verification
+                </label>
+                <FingerprintUploader
+                  onVerificationComplete={handleFingerprintVerification}
+                  disabled={isLoading}
+                />
+              </div>
 
             {/* Success Message */}
             {successMessage && (
@@ -214,17 +269,17 @@ const Login = () => {
               </motion.div>
             )}
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              loading={isLoading}
-              disabled={!fingerprintVerified || !formData.voterId || !formData.extraField}
-              className="w-full"
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </Button>
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                loading={isLoading}
+                disabled={!fingerprintVerified || !formData.voterId || !formData.extraField}
+                className="w-full"
+              >
+                {isLoading ? 'Signing In...' : 'Sign In'}
+              </Button>
           </form>
 
           {/* Footer */}
@@ -235,12 +290,6 @@ const Login = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Need help? Contact your voting center administrator
             </p>
-            <Link
-              to="/register"
-              className="inline-flex items-center text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-            >
-              Don't have an account? Register here
-            </Link>
           </div>
         </motion.div>
 

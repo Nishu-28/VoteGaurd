@@ -12,6 +12,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/elections")
+@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class ElectionController {
 
@@ -103,5 +104,144 @@ public class ElectionController {
     public ResponseEntity<Long> countActiveElections() {
         long count = electionService.countActiveElections();
         return ResponseEntity.ok(count);
+    }
+    
+    @GetMapping("/code/{electionCode}")
+    public ResponseEntity<?> getElectionByCode(@PathVariable String electionCode) {
+        Optional<Election> election = electionService.findByElectionCode(electionCode);
+        if (election.isPresent()) {
+            return ResponseEntity.ok(election.get());
+        }
+        return ResponseEntity.notFound().build();
+    }
+    
+    @PostMapping("/validate-code")
+    public ResponseEntity<?> validateElectionCode(@RequestBody java.util.Map<String, String> request) {
+        String electionCode = request.get("electionCode");
+        
+        if (electionCode == null || electionCode.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "valid", false,
+                "message", "Election code is required"
+            ));
+        }
+        
+        boolean isValid = electionService.validateElectionCode(electionCode);
+        
+        if (isValid) {
+            Optional<Election> election = electionService.findActiveElectionByCode(electionCode);
+            return ResponseEntity.ok(java.util.Map.of(
+                "valid", true,
+                "message", "Election code is valid",
+                "election", election.get()
+            ));
+        } else {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "valid", false,
+                "message", "Invalid or expired election code"
+            ));
+        }
+    }
+    
+    @PostMapping("/{id}/generate-otp")
+    public ResponseEntity<?> generateOtp(@PathVariable Long id) {
+        try {
+            String otp = electionService.generateOtpForElection(id);
+            Optional<Election> election = electionService.findById(id);
+            Election electionObj = election.get();
+            
+            // Format expiresAt as ISO-8601 string for consistent frontend parsing
+            String expiresAtStr = electionObj.getOtpExpiresAt() != null 
+                ? electionObj.getOtpExpiresAt().toString() 
+                : null;
+            
+            return ResponseEntity.ok(java.util.Map.of(
+                "success", true,
+                "otp", otp,
+                "expiresAt", expiresAtStr != null ? expiresAtStr : "",
+                "message", "OTP generated successfully. Valid for 2 minutes."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+    
+    @PostMapping("/setup-center")
+    public ResponseEntity<?> setupCenter(@RequestBody java.util.Map<String, Object> request) {
+        try {
+            // Get parameters from request with null checks
+            Object electionCodeObj = request.get("electionCode");
+            Object otpObj = request.get("otp");
+            Object centerLocationObj = request.get("centerLocation");
+            
+            if (electionCodeObj == null) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                    "success", false,
+                    "message", "electionCode is required"
+                ));
+            }
+            
+            if (otpObj == null) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                    "success", false,
+                    "message", "otp is required"
+                ));
+            }
+            
+            if (centerLocationObj == null) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                    "success", false,
+                    "message", "centerLocation is required"
+                ));
+            }
+            
+            String electionCode = electionCodeObj.toString().toUpperCase().trim();
+            String otp = otpObj.toString().trim();
+            String centerLocation = centerLocationObj.toString().trim();
+            
+            // Validate election code format
+            if (electionCode.length() != 6) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                    "success", false,
+                    "message", "Election code must be exactly 6 characters"
+                ));
+            }
+            
+            // Find election by code
+            Optional<Election> electionOpt = electionService.findByElectionCode(electionCode);
+            if (electionOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                    "success", false,
+                    "message", "Invalid election code"
+                ));
+            }
+            
+            Election election = electionOpt.get();
+            Long electionId = election.getId();
+            
+            // Validate and setup center
+            electionService.setupElectionCenter(electionId, otp, centerLocation);
+            
+            return ResponseEntity.ok(java.util.Map.of(
+                "success", true,
+                "message", "Election center setup successfully",
+                "electionId", electionId,
+                "electionCode", electionCode,
+                "centerLocation", centerLocation
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "success", false,
+                "message", "Failed to setup center: " + e.getMessage()
+            ));
+        }
     }
 }

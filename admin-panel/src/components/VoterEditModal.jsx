@@ -22,11 +22,14 @@ const VoterEditModal = ({ voter, isOpen, onClose, onSave }) => {
 
   useEffect(() => {
     if (isOpen && voter) {
+      // Convert eligibleElections IDs to strings for consistency
+      const eligibleElections = (voter.eligibleElections || []).map(id => String(id));
+      
       setEditData({
         email: voter.email || '',
         extraField: voter.extraField || '',
         isActive: voter.isActive !== undefined ? voter.isActive : true,
-        eligibleElections: voter.eligibleElections || []
+        eligibleElections: eligibleElections
       });
       fetchElections();
       setFingerprintVerified(false);
@@ -57,12 +60,17 @@ const VoterEditModal = ({ voter, isOpen, onClose, onSave }) => {
   };
 
   const handleElectionToggle = (electionId) => {
-    setEditData(prev => ({
-      ...prev,
-      eligibleElections: prev.eligibleElections.includes(electionId)
-        ? prev.eligibleElections.filter(id => id !== electionId)
-        : [...prev.eligibleElections, electionId]
-    }));
+    // Convert electionId to string for consistency with database format
+    const electionIdStr = String(electionId);
+    setEditData(prev => {
+      const currentIds = (prev.eligibleElections || []).map(id => String(id));
+      return {
+        ...prev,
+        eligibleElections: currentIds.includes(electionIdStr)
+          ? currentIds.filter(id => id !== electionIdStr)
+          : [...currentIds, electionIdStr]
+      };
+    });
   };
 
   const handleFingerprintVerification = async (verified, file) => {
@@ -315,7 +323,7 @@ const VoterEditModal = ({ voter, isOpen, onClose, onSave }) => {
                                 <input
                                   type="checkbox"
                                   id={`edit-election-${election.id}`}
-                                  checked={editData.eligibleElections.includes(election.id)}
+                                  checked={(editData.eligibleElections || []).map(id => String(id)).includes(String(election.id))}
                                   onChange={() => handleElectionToggle(election.id)}
                                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                 />

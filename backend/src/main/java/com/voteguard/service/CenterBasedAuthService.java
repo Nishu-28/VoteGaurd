@@ -85,8 +85,8 @@ public class CenterBasedAuthService {
                 throw new RuntimeException("Voter has already cast their vote");
             }
 
-            // Step 4: Verify fingerprint
-            boolean fingerprintVerified = verifyFingerprint(voter.getFingerprintHash(), fingerprintFile);
+            // Step 4: Verify fingerprint using stored fingerprint data
+            boolean fingerprintVerified = verifyFingerprint(voter.getVoterId(), fingerprintFile);
             if (!fingerprintVerified) {
                 log.warn("Authentication failed: Fingerprint verification failed for voterId={}", voterId);
                 auditLogService.logSecurityEvent(voter.getId(), "FINGERPRINT_VERIFICATION_FAILED", "AUTH", ipAddress, userAgent, 
@@ -117,21 +117,32 @@ public class CenterBasedAuthService {
     }
 
     /**
-     * Verify fingerprint against stored hash using biometric service
+     * Verify fingerprint against stored data using biometric service
      */
-    private boolean verifyFingerprint(String storedHash, MultipartFile fingerprintFile) {
+    private boolean verifyFingerprint(String voterId, MultipartFile fingerprintFile) {
         try {
-            // Get the stored fingerprint data from the database
-            String sql = "SELECT fingerprint_data FROM voters WHERE fingerprint_hash = ?";
-            byte[] storedFingerprintData = jdbcTemplate.queryForObject(sql, byte[].class, storedHash);
+            // Get the stored fingerprint data from the fingerprint_data table
+            String sql = "SELECT fingerprint_data FROM fingerprint_data WHERE voter_id = ?";
             
-            if (storedFingerprintData == null) {
-                log.error("No stored fingerprint data found for hash: {}", storedHash);
+            byte[] storedFingerprintData = null;
+            try {
+                storedFingerprintData = jdbcTemplate.queryForObject(sql, byte[].class, voterId);
+            } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+                log.error("No stored fingerprint data found for voter_id: {}", voterId);
                 return false;
             }
             
+            if (storedFingerprintData == null || storedFingerprintData.length == 0) {
+                log.error("Stored fingerprint data is null or empty for voter_id: {}", voterId);
+                return false;
+            }
+            
+            log.info("Found stored fingerprint data for voter_id: {}, size: {} bytes", voterId, storedFingerprintData.length);
+            
             // Call biometric service comparison endpoint
             String url = biometricServiceUrl + "/compare";
+            
+            log.info("Calling biometric service compare endpoint: {}", url);
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -152,6 +163,7 @@ public class CenterBasedAuthService {
 
             HttpEntity<org.springframework.util.LinkedMultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
             
+            log.info("Sending fingerprint comparison request to biometric service");
             ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -163,9 +175,10 @@ public class CenterBasedAuthService {
                 return isMatch;
             }
             
+            log.warn("Biometric service returned unsuccessful response");
             return false;
         } catch (Exception e) {
-            log.error("Fingerprint verification error: {}", e.getMessage());
+            log.error("Fingerprint verification error: {}", e.getMessage(), e);
             return false;
         }
     }

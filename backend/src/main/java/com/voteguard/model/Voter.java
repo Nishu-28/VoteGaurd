@@ -76,6 +76,9 @@ public class Voter implements UserDetails {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
+    public List<String> getEligibleElections() { return eligibleElections; }
+    public void setEligibleElections(List<String> eligibleElections) { this.eligibleElections = eligibleElections; }
+
     // Builder pattern
     public static VoterBuilder builder() {
         return new VoterBuilder();
@@ -91,6 +94,7 @@ public class Voter implements UserDetails {
         private Boolean hasVoted = false;
         private Boolean isActive = true;
         private Role role = Role.VOTER;
+        private List<String> eligibleElections;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
@@ -103,12 +107,15 @@ public class Voter implements UserDetails {
         public VoterBuilder hasVoted(Boolean hasVoted) { this.hasVoted = hasVoted; return this; }
         public VoterBuilder isActive(Boolean isActive) { this.isActive = isActive; return this; }
         public VoterBuilder role(Role role) { this.role = role; return this; }
+        public VoterBuilder eligibleElections(List<String> eligibleElections) { this.eligibleElections = eligibleElections; return this; }
         public VoterBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public VoterBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
 
         public Voter build() {
-            return new Voter(id, voterId, fullName, email, fingerprintHash, extraField, 
+            Voter voter = new Voter(id, voterId, fullName, email, fingerprintHash, extraField, 
                            hasVoted, isActive, role, createdAt, updatedAt);
+            voter.setEligibleElections(eligibleElections);
+            return voter;
         }
     }
     

@@ -143,7 +143,7 @@ const VoterRegistration = () => {
       formDataToSend.append('profilePhoto', profilePhotoFile);
 
       // Make API call to backend
-      const response = await fetch('http://localhost:8080/voters/register', {
+      const response = await fetch('http://localhost:8080/api/voters/register', {
         method: 'POST',
         body: formDataToSend
       });

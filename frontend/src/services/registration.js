@@ -18,7 +18,7 @@ export const registrationService = {
         formData.append('profilePhoto', voterData.profilePhoto);
       }
       
-      const response = await api.post('/voters/register', formData, {
+      const response = await api.post('voters/register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -33,7 +33,7 @@ export const registrationService = {
 
   getVoters: async (limit = 50, offset = 0) => {
     try {
-      const response = await api.get(`/voters?limit=${limit}&offset=${offset}`);
+      const response = await api.get(`voters?limit=${limit}&offset=${offset}`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.error || 'Failed to get voters');
@@ -42,7 +42,7 @@ export const registrationService = {
 
   getVoter: async (voterId) => {
     try {
-      const response = await api.get(`/voters/${voterId}`);
+      const response = await api.get(`voters/${voterId}`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.error || 'Failed to get voter');

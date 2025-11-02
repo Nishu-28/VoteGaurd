@@ -1,8 +1,9 @@
 package com.voteguard.config;
 
 import com.voteguard.security.JwtAuthenticationFilter;
-import com.voteguard.security.AdminUserDetailsService;
+import com.voteguard.security.CombinedUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,11 +24,12 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     @Autowired
-    private AdminUserDetailsService adminUserDetailsService;
+    @Qualifier("combinedUserDetailsService")
+    private CombinedUserDetailsService combinedUserDetailsService;
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return adminUserDetailsService;
+        return combinedUserDetailsService;
     }
 
     @Bean
@@ -39,10 +41,10 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**", "/ping", "/health").permitAll()
                 .requestMatchers("/admin/login", "/admin/login/fallback").permitAll() // Allow login endpoints
                 .requestMatchers("/admin/**").authenticated() // Require authentication for admin routes
-                .requestMatchers("/voters/**").permitAll() // Allow all voter endpoints without authentication
-                .requestMatchers("/elections/**", "/candidates/**").permitAll() // Allow elections and candidates endpoints without authentication
-                .requestMatchers("/stations/**").permitAll() // Allow stations endpoints without authentication
-                .requestMatchers("/vote/**", "/results/**").permitAll() // Allow voting and results endpoints without authentication
+                .requestMatchers("/api/voters/**", "/voters/**").permitAll() // Allow all voter endpoints without authentication
+                .requestMatchers("/api/elections/**", "/api/candidates/**", "/elections/**", "/candidates/**").permitAll() // Allow elections and candidates endpoints without authentication
+                .requestMatchers("/api/stations/**", "/stations/**").permitAll() // Allow stations endpoints without authentication
+                .requestMatchers("/api/vote/**", "/api/results/**", "/vote/**", "/results/**").permitAll() // Allow voting and results endpoints without authentication
                 .requestMatchers("/h2-console/**").permitAll() // Allow H2 console
                 .anyRequest().permitAll() // Allow all other requests without authentication
             )
@@ -58,8 +60,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Use allowedOriginPatterns instead of allowedOrigins when allowCredentials is true
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        // Allow both voter frontend (5173) and admin panel (5174)
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:5173",  // Voter frontend
+            "http://localhost:5174"   // Admin panel
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization",

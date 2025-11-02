@@ -8,7 +8,8 @@ public class Vote {
     private Voter voter;
     private String voterName;
     private Candidate candidate;
-    private String stationCode;
+    private String stationCode; // Optional - kept for backward compatibility
+    private String centerLocation; // Center where vote was cast
     private LocalDateTime timestamp;
     private String ipAddress;
     private String userAgent;
@@ -23,7 +24,7 @@ public class Vote {
     }
 
     // All args constructor
-    public Vote(Long id, Voter voter, String voterName, Candidate candidate, String stationCode, 
+    public Vote(Long id, Voter voter, String voterName, Candidate candidate, String stationCode, String centerLocation,
                 LocalDateTime timestamp, String ipAddress, String userAgent, Boolean fingerprintVerified,
                 Long electionId, Election election) {
         this.id = id;
@@ -31,6 +32,7 @@ public class Vote {
         this.voterName = voterName;
         this.candidate = candidate;
         this.stationCode = stationCode;
+        this.centerLocation = centerLocation;
         this.timestamp = timestamp;
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
@@ -78,6 +80,14 @@ public class Vote {
 
     public void setStationCode(String stationCode) {
         this.stationCode = stationCode;
+    }
+    
+    public String getCenterLocation() {
+        return centerLocation;
+    }
+
+    public void setCenterLocation(String centerLocation) {
+        this.centerLocation = centerLocation;
     }
 
     public LocalDateTime getTimestamp() {
@@ -139,6 +149,7 @@ public class Vote {
         private String voterName;
         private Candidate candidate;
         private String stationCode;
+        private String centerLocation;
         private LocalDateTime timestamp;
         private String ipAddress;
         private String userAgent;
@@ -168,6 +179,11 @@ public class Vote {
 
         public Builder stationCode(String stationCode) {
             this.stationCode = stationCode;
+            return this;
+        }
+        
+        public Builder centerLocation(String centerLocation) {
+            this.centerLocation = centerLocation;
             return this;
         }
 
@@ -202,7 +218,7 @@ public class Vote {
         }
 
         public Vote build() {
-            return new Vote(id, voter, voterName, candidate, stationCode, timestamp, ipAddress, userAgent, fingerprintVerified, electionId, election);
+            return new Vote(id, voter, voterName, candidate, stationCode, centerLocation, timestamp, ipAddress, userAgent, fingerprintVerified, electionId, election);
         }
     }
 }
