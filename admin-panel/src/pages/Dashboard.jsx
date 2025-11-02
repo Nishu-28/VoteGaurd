@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, Vote, Calendar, BarChart3, TrendingUp, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { resultsAPI } from '../services/api';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -39,6 +40,21 @@ const Dashboard = () => {
       const votersResult = votersRes.ok ? await votersRes.json() : [];
       const elections = electionsRes.ok ? await electionsRes.json() : [];
       const candidates = candidatesRes.ok ? await candidatesRes.json() : [];
+      
+      // Get total votes from results API
+      let totalVotes = 0;
+      try {
+        const resultsResponse = await resultsAPI.getSummary();
+        if (resultsResponse.data && resultsResponse.data.totalVotes !== undefined) {
+          totalVotes = resultsResponse.data.totalVotes;
+        }
+      } catch (error) {
+        console.warn('Failed to fetch total votes from results API:', error);
+        // Fallback: count votes from voters (not ideal but better than 0)
+        totalVotes = Array.isArray(votersResult) 
+          ? votersResult.filter(v => v.hasVoted).length 
+          : 0;
+      }
 
       // Extract the data array from the voters response
       const voters = Array.isArray(votersResult) ? votersResult : (votersResult.data || []);
@@ -56,7 +72,7 @@ const Dashboard = () => {
         totalElections: elections.length,
         activeElections,
         totalCandidates: candidates.length,
-        totalVotes: voters.filter(v => v.hasVoted).length,
+        totalVotes: totalVotes,
         recentRegistrations
       });
       

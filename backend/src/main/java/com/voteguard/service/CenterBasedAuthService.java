@@ -6,6 +6,7 @@ import com.voteguard.repository.VoterRepository;
 import com.voteguard.repository.VoteRepository;
 import com.voteguard.repository.ElectionRepository;
 import com.voteguard.security.JwtTokenProvider;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,11 +83,23 @@ public class CenterBasedAuthService {
                 throw new RuntimeException("Voter account is inactive");
             }
 
-            // Step 3: Check if voter has already voted in the specific election (if election code provided)
+            // Step 3: Check eligibility and voting status if election code provided
             if (electionCode != null && !electionCode.trim().isEmpty()) {
                 Optional<Election> electionOpt = electionRepository.findByElectionCode(electionCode.trim().toUpperCase());
                 if (electionOpt.isPresent()) {
                     Election election = electionOpt.get();
+                    
+                    // Check if voter is eligible for this election FIRST
+                    boolean isEligible = electionRepository.isVoterEligible(voter.getId(), election.getId());
+                    if (!isEligible) {
+                        log.warn("Authentication failed: Voter not eligible for election voterId={}, electionId={}, electionCode={}", 
+                            voterId, election.getId(), electionCode);
+                        auditLogService.logSecurityEvent(voter.getId(), "AUTH_FAILED", "AUTH", ipAddress, userAgent, 
+                            Map.of("reason", "not_eligible_for_election", "electionId", election.getId(), "electionCode", electionCode));
+                        throw new RuntimeException("Voter is not eligible for this election");
+                    }
+                    
+                    // Check if voter has already voted in this election
                     boolean hasVoted = voteRepository.existsByVoterIdAndElectionId(voter.getId(), election.getId());
                     if (hasVoted) {
                         log.warn("Authentication failed: Voter already voted in election voterId={}, electionId={}, electionCode={}", 
@@ -96,9 +109,10 @@ public class CenterBasedAuthService {
                         throw new RuntimeException("You have already cast your vote in this election. Thank you for participating!");
                     }
                 } else {
-                    log.warn("Authentication warning: Election code not found electionCode={}", electionCode);
-                    // Don't fail login if election code is invalid, just log a warning
-                    // The voter can still login but won't be able to vote if election doesn't exist
+                    log.warn("Authentication failed: Election code not found electionCode={}", electionCode);
+                    auditLogService.logSecurityEvent(voter.getId(), "AUTH_FAILED", "AUTH", ipAddress, userAgent, 
+                        Map.of("reason", "election_not_found", "electionCode", electionCode));
+                    throw new RuntimeException("Invalid election code. Please check the election code and try again.");
                 }
             } else {
                 // If no election code provided, check general hasVoted flag for backward compatibility

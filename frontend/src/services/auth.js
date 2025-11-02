@@ -37,6 +37,10 @@ export const authService = {
           throw new Error('Fingerprint verification failed. Please ensure you are using the same fingerprint from registration.');
         } else if (errorMessage.includes('already voted') || errorMessage.includes('already cast your vote')) {
           throw new Error('You have already cast your vote in this election. Thank you for participating!');
+        } else if (errorMessage.includes('not eligible') || errorMessage.includes('not eligible for this election')) {
+          throw new Error('You are not eligible to vote in this election. Please contact the administrator if you believe this is an error.');
+        } else if (errorMessage.includes('Invalid election code') || errorMessage.includes('election code not found')) {
+          throw new Error('Invalid election code. Please check the election code and try again.');
         } else if (errorMessage.includes('inactive')) {
           throw new Error('Your voter account is inactive. Please contact the administrator.');
         }
