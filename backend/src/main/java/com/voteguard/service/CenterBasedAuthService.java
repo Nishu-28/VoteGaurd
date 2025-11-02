@@ -1,7 +1,10 @@
 package com.voteguard.service;
 
 import com.voteguard.model.Voter;
+import com.voteguard.model.Election;
 import com.voteguard.repository.VoterRepository;
+import com.voteguard.repository.VoteRepository;
+import com.voteguard.repository.ElectionRepository;
 import com.voteguard.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +33,8 @@ import java.util.Optional;
 public class CenterBasedAuthService {
 
     private final VoterRepository voterRepository;
+    private final VoteRepository voteRepository;
+    private final ElectionRepository electionRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuditLogService auditLogService;
     private final JdbcTemplate jdbcTemplate;
@@ -44,7 +49,7 @@ public class CenterBasedAuthService {
     /**
      * Authenticate voter using voter ID, extra field, and fingerprint
      */
-    public Map<String, Object> authenticateVoter(String voterId, String extraField, MultipartFile fingerprintFile, String ipAddress, String userAgent) {
+    public Map<String, Object> authenticateVoter(String voterId, String extraField, MultipartFile fingerprintFile, String ipAddress, String userAgent, String electionCode) {
         try {
             // Normalize inputs for better matching
             String normalizedVoterId = voterId != null ? voterId.trim().toUpperCase() : "";
@@ -77,12 +82,32 @@ public class CenterBasedAuthService {
                 throw new RuntimeException("Voter account is inactive");
             }
 
-            // Step 3: Check if voter has already voted
-            if (voter.getHasVoted()) {
-                log.warn("Authentication failed: Voter already voted voterId={}", voterId);
-                auditLogService.logSecurityEvent(voter.getId(), "AUTH_FAILED", "AUTH", ipAddress, userAgent, 
-                    Map.of("reason", "already_voted"));
-                throw new RuntimeException("Voter has already cast their vote");
+            // Step 3: Check if voter has already voted in the specific election (if election code provided)
+            if (electionCode != null && !electionCode.trim().isEmpty()) {
+                Optional<Election> electionOpt = electionRepository.findByElectionCode(electionCode.trim().toUpperCase());
+                if (electionOpt.isPresent()) {
+                    Election election = electionOpt.get();
+                    boolean hasVoted = voteRepository.existsByVoterIdAndElectionId(voter.getId(), election.getId());
+                    if (hasVoted) {
+                        log.warn("Authentication failed: Voter already voted in election voterId={}, electionId={}, electionCode={}", 
+                            voterId, election.getId(), electionCode);
+                        auditLogService.logSecurityEvent(voter.getId(), "AUTH_FAILED", "AUTH", ipAddress, userAgent, 
+                            Map.of("reason", "already_voted_in_election", "electionId", election.getId(), "electionCode", electionCode));
+                        throw new RuntimeException("You have already cast your vote in this election. Thank you for participating!");
+                    }
+                } else {
+                    log.warn("Authentication warning: Election code not found electionCode={}", electionCode);
+                    // Don't fail login if election code is invalid, just log a warning
+                    // The voter can still login but won't be able to vote if election doesn't exist
+                }
+            } else {
+                // If no election code provided, check general hasVoted flag for backward compatibility
+                if (voter.getHasVoted()) {
+                    log.warn("Authentication failed: Voter already voted (general) voterId={}", voterId);
+                    auditLogService.logSecurityEvent(voter.getId(), "AUTH_FAILED", "AUTH", ipAddress, userAgent, 
+                        Map.of("reason", "already_voted"));
+                    throw new RuntimeException("Voter has already cast their vote");
+                }
             }
 
             // Step 4: Verify fingerprint using stored fingerprint data

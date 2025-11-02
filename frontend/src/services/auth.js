@@ -11,12 +11,15 @@ const publicApi = axios.create({
 });
 
 export const authService = {
-  login: async (voterId, extraField, fingerprintFile) => {
+  login: async (voterId, extraField, fingerprintFile, electionCode = null) => {
     try {
       const formData = new FormData();
       formData.append('voterId', voterId);
       formData.append('extraField', extraField);
       formData.append('fingerprint', fingerprintFile);
+      if (electionCode) {
+        formData.append('electionCode', electionCode);
+      }
 
       const response = await publicApi.post('/auth/login', formData, {
         headers: {
@@ -32,8 +35,8 @@ export const authService = {
           throw new Error('Invalid Voter ID or extra field. Please check your credentials and try again.');
         } else if (errorMessage.includes('Fingerprint verification failed')) {
           throw new Error('Fingerprint verification failed. Please ensure you are using the same fingerprint from registration.');
-        } else if (errorMessage.includes('already voted')) {
-          throw new Error('You have already cast your vote.');
+        } else if (errorMessage.includes('already voted') || errorMessage.includes('already cast your vote')) {
+          throw new Error('You have already cast your vote in this election. Thank you for participating!');
         } else if (errorMessage.includes('inactive')) {
           throw new Error('Your voter account is inactive. Please contact the administrator.');
         }

@@ -111,7 +111,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await authService.login(normalizedVoterId, normalizedExtraField, fingerprintFile);
+      const response = await authService.login(normalizedVoterId, normalizedExtraField, fingerprintFile, electionCode);
       
       // Store token and user data
       login(response.token, {

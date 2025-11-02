@@ -30,6 +30,7 @@ public class CenterBasedAuthController {
             @RequestParam("voterId") String voterId,
             @RequestParam("extraField") String extraField,
             @RequestParam("fingerprint") MultipartFile fingerprintFile,
+            @RequestParam(value = "electionCode", required = false) String electionCode,
             HttpServletRequest request) {
         
         try {
@@ -37,7 +38,7 @@ public class CenterBasedAuthController {
             String userAgent = request.getHeader("User-Agent");
             
             Map<String, Object> response = centerBasedAuthService.authenticateVoter(
-                voterId, extraField, fingerprintFile, ipAddress, userAgent);
+                voterId, extraField, fingerprintFile, ipAddress, userAgent, electionCode);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
