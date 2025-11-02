@@ -115,6 +115,9 @@ export const candidatesAPI = {
   
   // Delete candidate
   delete: (id) => api.delete(`/candidates/${id}`),
+  
+  // Get candidate photo
+  getPhoto: (id) => api.get(`/candidates/${id}/photo`),
 };
 
 export const statisticsAPI = {
@@ -128,9 +131,18 @@ export const statisticsAPI = {
   getElectionStats: (electionId) => api.get(`/statistics/elections/${electionId}`),
 };
 
+export const resultsAPI = {
+  // Get general voting results
+  getSummary: () => api.get('/results/summary'),
+  
+  // Get election-specific results
+  getElectionResults: (electionId) => api.get(`/results/election/${electionId}`),
+};
+
 export default {
   elections: electionsAPI,
   voters: votersAPI,
   candidates: candidatesAPI,
   statistics: statisticsAPI,
+  results: resultsAPI,
 };

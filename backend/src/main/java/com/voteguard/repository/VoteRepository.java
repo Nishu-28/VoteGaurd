@@ -303,6 +303,23 @@ public class VoteRepository {
         return jdbcTemplate.query(sql, (rs, rowNum) -> new Object[]{rs.getLong("candidate_id"), rs.getLong("count")});
     }
 
+    public List<Object[]> getVoteCountsByCandidateForElection(Long electionId) {
+        String sql = "SELECT candidate_id, COUNT(*) FROM votes WHERE election_id = ? GROUP BY candidate_id";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new Object[]{rs.getLong("candidate_id"), rs.getLong("count")}, electionId);
+    }
+
+    public long getTotalVoteCountForElection(Long electionId) {
+        String sql = "SELECT COUNT(*) FROM votes WHERE election_id = ?";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, electionId);
+        return count != null ? count : 0;
+    }
+
+    public long countVotersWhoVotedInElection(Long electionId) {
+        String sql = "SELECT COUNT(DISTINCT voter_id) FROM votes WHERE election_id = ?";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, electionId);
+        return count != null ? count : 0;
+    }
+
     public long countVotesBetween(LocalDateTime startTime, LocalDateTime endTime) {
         String sql = "SELECT COUNT(*) FROM votes WHERE timestamp >= ? AND timestamp <= ?";
         Long count = jdbcTemplate.queryForObject(sql, Long.class, startTime, endTime);

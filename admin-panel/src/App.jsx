@@ -9,6 +9,7 @@ import Elections from './pages/Elections';
 import CandidateRegistration from './pages/CandidateRegistration';
 import VoterRegistration from './pages/VoterRegistration';
 import VotersList from './pages/VotersList';
+import Results from './pages/Results';
 
 const AppContent = () => {
   const { isAuthenticated, loading } = useAdminAuth();
@@ -78,6 +79,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute>
                 <VotersList />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/results" 
+            element={
+              <ProtectedRoute>
+                <Results />
               </ProtectedRoute>
             } 
           />

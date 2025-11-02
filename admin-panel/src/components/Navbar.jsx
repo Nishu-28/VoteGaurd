@@ -86,6 +86,16 @@ const Navbar = () => {
               >
                 Voters List
               </Link>
+              <Link
+                to="/results"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/results')
+                    ? 'bg-blue-700 text-white'
+                    : 'text-blue-100 hover:bg-blue-500 hover:text-white'
+                }`}
+              >
+                Results
+              </Link>
             </div>
 
             {/* User Menu */}

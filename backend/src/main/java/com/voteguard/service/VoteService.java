@@ -10,11 +10,13 @@ import com.voteguard.repository.VoteRepository;
 import com.voteguard.repository.VoterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ public class VoteService {
     private final CandidateRepository candidateRepository;
     private final ElectionRepository electionRepository;
     private final AuditLogService auditLogService;
+    private final JdbcTemplate jdbcTemplate;
 
     @Transactional
     public Vote castVote(String voterId, Long candidateId, Long electionId, String ipAddress, String userAgent) {
@@ -200,6 +203,72 @@ public class VoteService {
     
     public List<Candidate> getActiveCandidatesByElection(Long electionId) {
         return candidateRepository.findByElectionIdAndIsActiveTrueOrderByCandidateNumberAsc(electionId);
+    }
+
+    public Map<String, Object> getElectionResults(Long electionId) {
+        // Get all candidates for this election
+        List<Candidate> candidates = candidateRepository.findByElectionIdAndIsActiveTrueOrderByCandidateNumberAsc(electionId);
+        
+        // Get vote counts by candidate for this election
+        List<Object[]> voteCounts = voteRepository.getVoteCountsByCandidateForElection(electionId);
+        
+        // Create a map for quick lookup
+        Map<Long, Long> voteCountMap = new HashMap<>();
+        for (Object[] count : voteCounts) {
+            voteCountMap.put((Long) count[0], (Long) count[1]);
+        }
+        
+        // Build candidate results with details
+        List<Map<String, Object>> candidateResults = new ArrayList<>();
+        for (Candidate candidate : candidates) {
+            Map<String, Object> candidateResult = new HashMap<>();
+            candidateResult.put("candidateId", candidate.getId());
+            candidateResult.put("candidateName", candidate.getName());
+            candidateResult.put("candidateNumber", candidate.getCandidateNumber());
+            candidateResult.put("party", candidate.getParty());
+            candidateResult.put("voteCount", voteCountMap.getOrDefault(candidate.getId(), 0L));
+            
+            // Check if candidate has a photo
+            boolean hasPhoto = false;
+            try {
+                String sql = "SELECT COUNT(*) FROM candidate_photos WHERE candidate_id = ?";
+                Integer count = jdbcTemplate.queryForObject(sql, Integer.class, candidate.getId());
+                hasPhoto = count != null && count > 0;
+            } catch (Exception e) {
+                log.debug("Could not check photo for candidate {}: {}", candidate.getId(), e.getMessage());
+            }
+            candidateResult.put("hasPhoto", hasPhoto);
+            candidateResult.put("photoUrl", "/api/candidates/" + candidate.getId() + "/photo");
+            
+            candidateResults.add(candidateResult);
+        }
+        
+        // Sort by vote count descending
+        candidateResults.sort((a, b) -> Long.compare((Long) b.get("voteCount"), (Long) a.get("voteCount")));
+        
+        // Calculate totals
+        long totalVotes = voteRepository.getTotalVoteCountForElection(electionId);
+        long votersWhoVoted = voteRepository.countVotersWhoVotedInElection(electionId);
+        
+        // Get total eligible voters for this election (from voters table)
+        long totalEligibleVoters = 0;
+        try {
+            // This is an approximation - in a real system, you'd check eligible_elections field
+            // For now, we'll use active voters count as approximation
+            totalEligibleVoters = voterRepository.countActiveVoters();
+        } catch (Exception e) {
+            log.warn("Could not get total eligible voters: {}", e.getMessage());
+        }
+        
+        Map<String, Object> results = new HashMap<>();
+        results.put("electionId", electionId);
+        results.put("totalVotes", totalVotes);
+        results.put("totalEligibleVoters", totalEligibleVoters);
+        results.put("votersWhoVoted", votersWhoVoted);
+        results.put("votingPercentage", totalEligibleVoters > 0 ? (double) votersWhoVoted / totalEligibleVoters * 100 : 0);
+        results.put("candidateResults", candidateResults);
+        
+        return results;
     }
 
     public boolean hasVoterVoted(Long voterId) {

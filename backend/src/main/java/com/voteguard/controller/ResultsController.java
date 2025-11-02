@@ -25,6 +25,16 @@ public class ResultsController {
         }
     }
 
+    @GetMapping("/election/{electionId}")
+    public ResponseEntity<Map<String, Object>> getElectionResults(@PathVariable Long electionId) {
+        try {
+            Map<String, Object> results = voteService.getElectionResults(electionId);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/ping")
     public ResponseEntity<Map<String, String>> ping() {
         return ResponseEntity.ok(Map.of("message", "Results service is running"));
